@@ -16,6 +16,9 @@ def build(row):
     log = ROOT / '.local' / f'build-{target}.log'
     log.parent.mkdir(exist_ok=True)
     env = os.environ.copy()
+    for major in (17, 21, 25):
+        if not env.get(f'JAVA_HOME_{major}') and env.get(f'JAVA_HOME_{major}_X64'):
+            env[f'JAVA_HOME_{major}'] = env[f'JAVA_HOME_{major}_X64']
     # An explicit JAVA_HOME_<major> overrides the caller's default Java.
     if env.get(f"JAVA_HOME_{row['java']}"):
         env['JAVA_HOME'] = env[f"JAVA_HOME_{row['java']}"]

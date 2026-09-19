@@ -1,0 +1,56 @@
+name: Build all versions
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      targets: ${{ steps.targets.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify resource contracts
+        run: python3 -m unittest discover -s tests -v
+      - id: targets
+        name: Read supported targets
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          rows = json.load(open('versions.json'))['targets']
+          print('targets=' + json.dumps([r['minecraft'] + '-' + r['loader'] for r in rows]))
+          PY
+  build:
+    needs: matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        target: ${{ fromJSON(needs.matrix.outputs.targets) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+            25
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build runtime jar
+        run: python3 tools/build_matrix.py --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: craftable-gunpowder-${{ matrix.target }}
+          path: dist/*.jar
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log-${{ matrix.target }}
+          path: .local/build-*.log
+          include-hidden-files: true
