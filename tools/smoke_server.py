@@ -14,7 +14,7 @@ import struct
 import subprocess
 import time
 from pathlib import Path
-from prepare import CONFIG, ROOT, prepare
+from prepare import CONFIG, ROOT, prepare, ver
 
 def free_port():
     with socket.socket() as s:
@@ -104,10 +104,56 @@ pause-when-empty-seconds=0
             record['checks']['ore_drop'] = response
             if '1 ' not in response:
                 raise RuntimeError('Ore drop failed: ' + response)
-            response = rcon.call('data get block 0 100 0 Items')
+            response = rcon.call('data get block 0 100 0 Items[{Slot:9b}].id')
             record['checks']['inventory'] = response
-            if 'craftablegunpowder:sulfur' not in response:
+            if '"craftablegunpowder:sulfur"' not in response:
                 raise RuntimeError('Missing sulfur in loot result')
+            if ver(row['minecraft']) < (1, 20, 5):
+                enchanted_tool = 'minecraft:diamond_pickaxe{Enchantments:[{id:"minecraft:silk_touch",lvl:1s}]}'
+            elif ver(row['minecraft']) < (1, 21, 5):
+                enchanted_tool = 'minecraft:diamond_pickaxe[minecraft:enchantments={levels:{"minecraft:silk_touch":1}}]'
+            else:
+                enchanted_tool = 'minecraft:diamond_pickaxe[minecraft:enchantments={"minecraft:silk_touch":1}]'
+            for name in ('sulfur_ore', 'deepslate_sulfur_ore'):
+                rcon.call(f'setblock 2 100 0 craftablegunpowder:{name}')
+                response = rcon.call('loot replace block 0 100 0 container.10 mine 2 100 0 ' + enchanted_tool)
+                response = rcon.call('data get block 0 100 0 Items[{Slot:10b}].id')
+                record['checks']['silk_' + name] = response
+                if f'"craftablegunpowder:{name}"' not in response:
+                    raise RuntimeError('Silk Touch failed: ' + response)
+            if ver(row['minecraft']) >= (1, 21):
+                # The vanilla crafter uses the actual crafting recipe manager.
+                # Its nine slots let us exercise success and rejection without
+                # adding test-only commands or fake players to the release mod.
+                def craft(name, slots, expected=None, count=None):
+                    for x, y, z in ((5, 100, 4), (4, 100, 4), (4, 99, 4)):
+                        rcon.call(f'setblock {x} {y} {z} minecraft:air')
+                    rcon.call('setblock 4 99 4 minecraft:chest')
+                    rcon.call('setblock 4 100 4 minecraft:crafter[orientation=down_north]')
+                    for slot, item in slots.items():
+                        rcon.call(f'item replace block 4 100 4 container.{slot} with {item}')
+                    rcon.call('setblock 5 100 4 minecraft:redstone_block')
+                    time.sleep(1.5)
+                    inventory = rcon.call('data get block 4 99 4 Items')
+                    record['checks'][name] = inventory
+                    if expected:
+                        if f'"{expected}"' not in inventory or f'count: {count}' not in inventory:
+                            raise RuntimeError(f'{name} failed: {inventory}')
+                    elif 'minecraft:gunpowder' in inventory:
+                        raise RuntimeError(f'Invalid recipe accepted: {name}')
+                    return inventory
+                ingredients = {0: 'craftablegunpowder:sulfur', 1: 'craftablegunpowder:saltpeter', 2: 'minecraft:charcoal'}
+                craft('craft_8_gunpowder', ingredients, 'minecraft:gunpowder', 8)
+                craft('reject_coal', {**ingredients, 2: 'minecraft:coal'})
+                craft('reject_2x2_layout', {0: ingredients[0], 1: ingredients[1], 3: ingredients[2]})
+                craft('craft_humus', {0: 'minecraft:oak_leaves', 1: 'minecraft:wheat', 2: 'minecraft:oak_leaves',
+                      3: 'minecraft:oak_leaves', 4: 'minecraft:dirt', 5: 'minecraft:oak_leaves',
+                      6: 'minecraft:oak_leaves', 7: 'minecraft:wheat_seeds', 8: 'minecraft:oak_leaves'}, 'craftablegunpowder:humus', 4)
+                inventory = craft('craft_saltpeter', {1: 'craftablegunpowder:humus', 3: 'craftablegunpowder:humus',
+                                  4: 'minecraft:water_bucket', 5: 'craftablegunpowder:humus', 7: 'minecraft:sand'},
+                                  'craftablegunpowder:saltpeter', 3)
+                if '"minecraft:bucket"' not in inventory:
+                    raise RuntimeError('Water bucket remainder was lost: ' + inventory)
             rcon.call('fill 5 40 5 20 55 20 minecraft:stone')
             response = rcon.call('place feature craftablegunpowder:sulfur_ore 12 46 12')
             record['checks']['feature'] = response

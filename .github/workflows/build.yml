@@ -1,6 +1,9 @@
 name: Build all versions
 on:
   push:
+    paths-ignore:
+      - '**/*.md'
+      - 'art/texture-preview.png'
   pull_request:
   workflow_dispatch:
 permissions:
@@ -43,6 +46,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Build runtime jar
         run: python3 tools/build_matrix.py --target '${{ matrix.target }}'
+      - name: Boot server and check content
+        run: python3 tools/smoke_server.py --target '${{ matrix.target }}' --jobs 1 --timeout 600 --accept-eula
       - uses: actions/upload-artifact@v4
         with:
           name: craftable-gunpowder-${{ matrix.target }}
@@ -52,5 +57,8 @@ jobs:
         if: always()
         with:
           name: build-log-${{ matrix.target }}
-          path: .local/build-*.log
+          path: |
+            .local/build-*.log
+            .local/smoke-*.log
+            .local/smoke-result-*.json
           include-hidden-files: true
