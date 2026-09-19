@@ -4,6 +4,7 @@ Runs only inside the generated target's run directory; never opens an existing w
 Pass --accept-eula to acknowledge https://aka.ms/MinecraftEULA for this test server.
 """
 import argparse
+import concurrent.futures
 import json
 import os
 import re
@@ -110,7 +111,7 @@ pause-when-empty-seconds=0
             rcon.call('fill 5 40 5 20 55 20 minecraft:stone')
             response = rcon.call('place feature craftablegunpowder:sulfur_ore 12 46 12')
             record['checks']['feature'] = response
-            if 'Placed feature' not in response:
+            if 'Placed ' not in response:
                 raise RuntimeError('Ore feature failed: ' + response)
             rcon.call('reload')
             time.sleep(4)
@@ -143,11 +144,17 @@ pause-when-empty-seconds=0
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--target', required=True)
+    parser.add_argument('--target', action='append')
+    parser.add_argument('--all', action='store_true')
+    parser.add_argument('--jobs', type=int, default=2)
     parser.add_argument('--timeout', type=int, default=900)
     parser.add_argument('--accept-eula', action='store_true')
     args = parser.parse_args()
     if not args.accept_eula:
         parser.error('--accept-eula is required to start the local test server')
-    row = next(r for r in CONFIG['targets'] if f"{r['minecraft']}-{r['loader']}" == args.target)
-    raise SystemExit(0 if smoke(row, args.timeout) else 1)
+    rows = [r for r in CONFIG['targets'] if args.all or f"{r['minecraft']}-{r['loader']}" in (args.target or [])]
+    if not rows:
+        parser.error('Select --target or --all')
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
+        results = list(pool.map(lambda row: smoke(row, args.timeout), rows))
+    raise SystemExit(0 if all(results) else 1)

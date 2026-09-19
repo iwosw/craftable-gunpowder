@@ -104,7 +104,13 @@ def generate(out, mc, loader):
 
     formats = {'1.20.1': 15, '1.20.4': 26, '1.20.6': 41, '1.21.1': 48,
                '1.21.4': 61, '1.21.5': 71, '1.21.8': 81, '1.21.11': 94, '26.1': 101, '26.2': 107}
-    pack = {'pack_format': formats[mc], 'description': 'Craftable Gunpowder by iwoss'}
+    resource_formats = {'1.20.1': 15, '1.20.4': 22, '1.20.6': 32, '1.21.1': 34,
+                        '1.21.4': 46, '1.21.5': 55, '1.21.8': 64, '1.21.11': 75, '26.1': 84, '26.2': 88}
+    # A mod carries both a client resource pack and server data pack. The range
+    # must include both format numbers, which Mojang versions independently.
+    pack = {'pack_format': resource_formats[mc], 'description': 'Craftable Gunpowder by iwoss'}
     if version >= (1, 21, 11):
-        pack.update(min_format=1, max_format=999)
+        pack.update(min_format=[resource_formats[mc], 0], max_format=[formats[mc], 1])
+    elif version >= (1, 20, 2):
+        pack['supported_formats'] = {'min_inclusive': resource_formats[mc], 'max_inclusive': formats[mc]}
     write_json(out / 'pack.mcmeta', {'pack': pack})

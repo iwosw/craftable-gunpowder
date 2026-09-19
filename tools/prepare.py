@@ -145,8 +145,9 @@ rootProject.name = 'craftable-gunpowder'
 }}
 repositories {{ maven {{ url = 'https://maven.neoforged.net/releases' }} }}
 dependencies {{ minecraft '{group}:forge:{row['loader_version']}' }}
-tasks.named('jar').configure {{ finalizedBy 'reobfJar' }}
 '''
+            if v < (1, 20, 6):
+                build += "tasks.named('jar').configure { finalizedBy 'reobfJar' }\n"
         else:
             build += f'''dependencies {{ implementation 'net.neoforged:neoforge:{row['loader_version']}' }}
 runs {{
