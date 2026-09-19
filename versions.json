@@ -1,6 +1,6 @@
 {
   "mod_version": "1.0.0",
-  "loom": "1.18.2",
+  "loom": "1.17.21",
   "targets": [
     {
       "minecraft": "1.20.1",

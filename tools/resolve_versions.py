@@ -53,7 +53,7 @@ if __name__ == '__main__':
             rows.append(dict(minecraft=mc, loader=loader, loader_version=version,
                              java=25 if era == 'modern' else 17 if era == 'legacy' else 21,
                              fabric_api=latest(data['fabric_api'], suffix='+'+mc) if loader == 'fabric' else None))
-    result = dict(mod_version='1.0.0', loom=latest(data['loom']), targets=rows)
+    result = dict(mod_version='1.0.0', loom='1.17.21', targets=rows)
     (ROOT / 'versions.json').write_text(json.dumps(result, indent=2) + '\n')
     for row in rows:
         print(row)

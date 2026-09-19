@@ -39,7 +39,8 @@ def prepare(row):
                   BLOCK_DESCRIPTION='properties.useBlockDescriptionPrefix();' if v >= (1, 21, 2) else '')
     (java / 'Content.java').write_text(substitute('Content.java', values), encoding='utf-8')
     if loader == 'fabric':
-        values.update(TAB_EVENTS='CreativeModeTabEvents' if modern else 'ItemGroupEvents',
+        values.update(TAB_PACKAGE='creativetab.v1' if modern else 'itemgroup.v1',
+                      TAB_EVENTS='CreativeModeTabEvents' if modern else 'ItemGroupEvents',
                       TAB_METHOD='modifyOutputEvent' if modern else 'modifyEntriesEvent')
         entry = 'FabricEntrypoint'
     else:
