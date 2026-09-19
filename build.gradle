@@ -1,0 +1,8 @@
+// Individual targets are prepared by tools/prepare.py.
+// This root build only maintains the Gradle wrapper.
+tasks.register('helpTargets') {
+    doLast {
+        println 'python tools/prepare.py --minecraft 1.21.1 --loader neoforge'
+        println './gradlew -p .build/1.21.1-neoforge build'
+    }
+}
