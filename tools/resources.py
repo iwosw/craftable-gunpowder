@@ -103,7 +103,7 @@ def generate(out, mc, loader):
         shutil.copy2(ROOT / 'art/icon.png', out / 'icon.png')
 
     formats = {'1.20.1': 15, '1.20.4': 26, '1.20.6': 41, '1.21.1': 48,
-               '1.21.4': 61, '1.21.5': 71, '1.21.8': 81, '1.21.11': 94, '26.1': 101, '26.2': 110}
+               '1.21.4': 61, '1.21.5': 71, '1.21.8': 81, '1.21.11': 94, '26.1': 101, '26.2': 107}
     pack = {'pack_format': formats[mc], 'description': 'Craftable Gunpowder by iwoss'}
     if version >= (1, 21, 11):
         pack.update(min_format=1, max_format=999)

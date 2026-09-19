@@ -150,8 +150,8 @@ tasks.named('jar').configure {{ finalizedBy 'reobfJar' }}
         else:
             build += f'''dependencies {{ implementation 'net.neoforged:neoforge:{row['loader_version']}' }}
 runs {{
-    configureEach {{ modSource sourceSets.main }}
-    server {{ programArgument '--nogui' }}
+    configureEach {{ modSource sourceSets.main; workingDirectory file('run') }}
+    server {{ arguments '--nogui' }}
     client {{ }}
 }}
 '''
@@ -160,7 +160,7 @@ runs {{
 neoForge {{
     enable {{ version = '{row['loader_version']}'; disableRecompilation = true }}
     runs {{
-        server {{ server(); programArgument '--nogui' }}
+        server {{ server(); gameDirectory = file('run'); programArgument '--nogui' }}
         client {{ client() }}
     }}
     mods {{ {MOD} {{ sourceSet sourceSets.main }} }}
