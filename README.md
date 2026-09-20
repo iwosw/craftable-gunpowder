@@ -96,6 +96,8 @@ Exact loader and Fabric API versions are pinned in [versions.json](versions.json
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and automated checks. GitHub Actions builds each target and boots an isolated test server. Client visuals and compatibility with other mods are not covered by those server checks.
 
+[1.0.0 verification results: 24/24 builds and servers passed.](docs/VALIDATION.md)
+
 ## Credits & license
 
 Created by **iwoss**. The icon was supplied by the author; all five textures were generated for this project with ImageGen. [Artwork sources and prompts](art/README.md).
