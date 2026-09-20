@@ -34,6 +34,7 @@ public final class FabricEntrypoint implements ModInitializer {
         BiomeModifications.addFeature(BiomeSelectors.foundInOverworld(),
                 GenerationStep.Decoration.UNDERGROUND_ORES,
                 ResourceKey.create(Registries.PLACED_FEATURE, Content.id("sulfur_ore")));
+        @INTEGRATION_HOOK@
     }
 
     private static Item item(String name) {

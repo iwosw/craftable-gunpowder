@@ -19,11 +19,12 @@ def audit(directory):
             names = set(jar.namelist())
             assert jar.testzip() is None, name
             assert 'LICENSE' in names and 'icon.png' in names, name
+            assert not any('IntegrationChecks' in entry for entry in names), 'Dev-only tests leaked into ' + name
             for material in ('item/sulfur', 'item/saltpeter', 'item/humus', 'block/sulfur_ore', 'block/deepslate_sulfur_ore'):
                 texture = jar.read('assets/craftablegunpowder/textures/' + material + '.png')
                 assert struct.unpack('>II', texture[16:24]) == (16, 16), name
             entrypoint = 'FabricEntrypoint' if loader == 'fabric' else 'ForgeEntrypoint'
-            for cls in ('Content', entrypoint):
+            for cls in ('Content', 'HumusItem', entrypoint):
                 bytecode = jar.read('dev/iwoss/craftablegunpowder/' + cls + '.class')
                 assert struct.unpack('>H', bytecode[6:8])[0] == row['java'] + 44, (name, cls)
             content = jar.read('dev/iwoss/craftablegunpowder/Content.class')
@@ -43,6 +44,7 @@ def audit(directory):
             else:
                 recipe_path = 'data/craftablegunpowder/recipe/gunpowder.json'
             recipe = json.loads(jar.read(recipe_path))
+            assert recipe_path.replace('gunpowder.json', 'saltpeter.json') not in names, 'Obsolete saltpeter recipe: ' + name
             assert recipe['result']['count'] == 8, name
             assert 'minecraft:charcoal' in json.dumps(recipe) and 'minecraft:coal' not in json.dumps(recipe), name
             for resource in names:

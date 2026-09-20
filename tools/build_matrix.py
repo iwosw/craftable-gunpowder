@@ -26,7 +26,7 @@ def build(row):
         env['JAVA_HOME'] = env['JAVA_HOME_25']  # Current Loom itself needs a recent JVM.
     elif row['java'] == 17 and env.get('JAVA_HOME_21'):
         env['JAVA_HOME'] = env['JAVA_HOME_21']
-    command = [str(project / ('gradlew.bat' if os.name == 'nt' else 'gradlew')), 'build', '--console', 'plain']
+    command = [str(project / ('gradlew.bat' if os.name == 'nt' else 'gradlew')), 'clean', 'build', '--console', 'plain']
     start = time.time()
     print('BUILD', target, flush=True)
     with log.open('w', encoding='utf-8') as stream:

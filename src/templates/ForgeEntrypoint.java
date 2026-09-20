@@ -29,6 +29,7 @@ public final class ForgeEntrypoint {
         BLOCKS.register(bus);
         ITEMS.register(bus);
         bus.addListener(this::creativeTabs);
+        @INTEGRATION_HOOK@
     }
 
     private void creativeTabs(BuildCreativeModeTabContentsEvent event) {

@@ -48,7 +48,7 @@ class Rcon:
 
 def smoke(row, timeout):
     target = f"{row['minecraft']}-{row['loader']}"
-    project = prepare(row)
+    project = prepare(row, integration=True)
     run = project / 'run'
     run.mkdir(exist_ok=True)
     (run / 'eula.txt').write_text('eula=true\n')
@@ -94,6 +94,11 @@ pause-when-empty-seconds=0
             record['checks']['startup'] = True
             rcon.call('forceload add 0 0')
             rcon.call('setblock 0 100 0 minecraft:chest')
+            time.sleep(2)
+            compost_result = rcon.call('craftablegunpowder_test')
+            if 'CRAFTABLE_GUNPOWDER_COMPOST_TEST_PASS' not in compost_result:
+                raise RuntimeError('Composter integration checks did not pass: ' + compost_result)
+            record['checks']['composter_25_percent'] = True
             for index, name in enumerate(('sulfur', 'saltpeter', 'humus', 'sulfur_ore', 'deepslate_sulfur_ore')):
                 response = rcon.call(f'item replace block 0 100 0 container.{index} with craftablegunpowder:{name}')
                 record['checks'][name] = response
@@ -149,11 +154,6 @@ pause-when-empty-seconds=0
                 craft('craft_humus', {0: 'minecraft:oak_leaves', 1: 'minecraft:wheat', 2: 'minecraft:oak_leaves',
                       3: 'minecraft:oak_leaves', 4: 'minecraft:dirt', 5: 'minecraft:oak_leaves',
                       6: 'minecraft:oak_leaves', 7: 'minecraft:wheat_seeds', 8: 'minecraft:oak_leaves'}, 'craftablegunpowder:humus', 4)
-                inventory = craft('craft_saltpeter', {1: 'craftablegunpowder:humus', 3: 'craftablegunpowder:humus',
-                                  4: 'minecraft:water_bucket', 5: 'craftablegunpowder:humus', 7: 'minecraft:sand'},
-                                  'craftablegunpowder:saltpeter', 3)
-                if '"minecraft:bucket"' not in inventory:
-                    raise RuntimeError('Water bucket remainder was lost: ' + inventory)
             rcon.call('fill 5 40 5 20 55 20 minecraft:stone')
             response = rcon.call('place feature craftablegunpowder:sulfur_ore 12 46 12')
             record['checks']['feature'] = response

@@ -39,12 +39,8 @@ class ResourceContracts(unittest.TestCase):
                 self.assertEqual(recipe['result']['count'], 8)
                 result_field = 'id' if ver(row['minecraft']) >= (1, 20, 5) else 'item'
                 self.assertEqual(recipe['result'][result_field], 'minecraft:gunpowder')
-                for name in ('humus', 'saltpeter'):
-                    self.assertEqual(files[base + name + '.json']['type'], 'minecraft:crafting_shaped')
-                salt = files[base + 'saltpeter.json']
-                bucket = salt['key']['B']
-                self.assertEqual(bucket if isinstance(bucket, str) else bucket['item'], 'minecraft:water_bucket')
-                self.assertEqual(salt['result']['count'], 3)
+                self.assertEqual(files[base + 'humus.json']['type'], 'minecraft:crafting_shaped')
+                self.assertNotIn(base + 'saltpeter.json', files)
                 # Worldgen has both stone and deepslate replacements and only an overworld modifier.
                 feature = files['data/craftablegunpowder/worldgen/configured_feature/sulfur_ore.json']
                 self.assertEqual(len(feature['config']['targets']), 2)

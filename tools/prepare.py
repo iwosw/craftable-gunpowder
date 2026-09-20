@@ -17,7 +17,7 @@ def substitute(template, values):
     assert not re.search(r'@[A-Z_]+@', text), template
     return text
 
-def prepare(row):
+def prepare(row, integration=False):
     mc, loader = row['minecraft'], row['loader']
     v = ver(mc)
     modern = v >= (26, 1)
@@ -33,16 +33,25 @@ def prepare(row):
 
     identifier = 'Identifier' if v >= (1, 21, 11) else 'ResourceLocation'
     values = dict(IDENTIFIER=identifier,
+                  INTEGRATION_HOOK='',
                   ID_FACTORY=f'{identifier}.fromNamespaceAndPath(MOD_ID, path)' if v >= (1, 21) else 'new ResourceLocation(MOD_ID, path)',
                   ITEM_ID='properties.setId(ResourceKey.create(Registries.ITEM, id(name)));' if v >= (1, 21, 2) else '',
                   BLOCK_ID='properties.setId(ResourceKey.create(Registries.BLOCK, id(name)));' if v >= (1, 21, 2) else '',
                   BLOCK_DESCRIPTION='properties.useBlockDescriptionPrefix();' if v >= (1, 21, 2) else '')
     (java / 'Content.java').write_text(substitute('Content.java', values), encoding='utf-8')
+    (java / 'HumusItem.java').write_text(substitute('HumusItem.java', values), encoding='utf-8')
+    integration_file = java / 'IntegrationChecks.java'
+    if integration:
+        shutil.copy2(ROOT / 'tests/java/IntegrationChecks.java', integration_file)
+    else:
+        integration_file.unlink(missing_ok=True)
     if loader == 'fabric':
         values.update(TAB_PACKAGE='creativetab.v1' if modern else 'itemgroup.v1',
                       TAB_EVENTS='CreativeModeTabEvents' if modern else 'ItemGroupEvents',
                       TAB_METHOD='modifyOutputEvent' if modern else 'modifyEntriesEvent')
         entry = 'FabricEntrypoint'
+        if integration:
+            values['INTEGRATION_HOOK'] = 'net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> IntegrationChecks.register(dispatcher));'
     else:
         values.update(FORGE_PACKAGE='net.neoforged.neoforge' if neo else 'net.minecraftforge',
                       BUS_PACKAGE='net.neoforged.bus.api' if neo else 'net.minecraftforge.eventbus.api',
@@ -51,13 +60,16 @@ def prepare(row):
                       BUS_ARGUMENT='IEventBus bus' if neo else '',
                       BUS_LOOKUP='' if neo else 'IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();')
         entry = 'ForgeEntrypoint'
+        if integration:
+            bus_owner = 'net.neoforged.neoforge.common.NeoForge' if neo else 'net.minecraftforge.common.MinecraftForge'
+            values['INTEGRATION_HOOK'] = f'{bus_owner}.EVENT_BUS.addListener(({values["FORGE_PACKAGE"]}.event.RegisterCommandsEvent event) -> IntegrationChecks.register(event.getDispatcher()));'
     (java / f'{entry}.java').write_text(substitute(f'{entry}.java', values), encoding='utf-8')
     generate(resources, mc, loader)
 
     if loader == 'fabric':
         write_json(resources / 'fabric.mod.json', {
             'schemaVersion': 1, 'id': MOD, 'version': CONFIG['mod_version'], 'name': 'Craftable Gunpowder',
-            'description': 'Mine sulfur, compost plants into humus, and craft gunpowder with saltpeter and charcoal.',
+            'description': 'Mine sulfur, use humus on a composter for saltpeter, and craft 8 gunpowder with charcoal.',
             'authors': ['iwoss'], 'contact': {'sources': 'https://github.com/iwosw/craftable-gunpowder',
                 'issues': 'https://github.com/iwosw/craftable-gunpowder/issues'},
             'license': 'MIT', 'icon': 'icon.png', 'environment': '*',
@@ -81,7 +93,7 @@ displayName="Craftable Gunpowder"
 displayURL="https://github.com/iwosw/craftable-gunpowder"
 logoFile="icon.png"
 authors="iwoss"
-description=''' + "'''Mine sulfur, turn plant matter into humus and saltpeter, and craft 8 gunpowder with charcoal.'''" + f'''
+description=''' + "'''Mine sulfur, use humus on a composter for a 25% chance of saltpeter, and craft 8 gunpowder with charcoal.'''" + f'''
 [[dependencies.{MOD}]]
 modId="{dep_id}"
 {required}
@@ -132,6 +144,10 @@ rootProject.name = 'craftable-gunpowder'
             build += f'''minecraft {{
     mappings channel: 'official', version: '{mc}'
     runs {{
+        configureEach {{
+            property 'terminal.jline', 'false'
+            property 'terminal.ansi', 'false'
+        }}
         server {{
             workingDirectory project.file('run')
             args '--nogui'
@@ -178,6 +194,15 @@ tasks.withType(AbstractArchiveTask).configureEach {{
     reproducibleFileOrder = true
 }}
 jar {{ from('LICENSE') }}
+'''
+    if forge and v >= (1, 20, 4):
+        # Current Forge's module finder requires each source set's classes and
+        # resources to share one directory (also used by the official MDK).
+        build += '''sourceSets.each {
+    def merged = layout.buildDirectory.dir("sourceSets/${it.name}")
+    it.output.resourcesDir = merged
+    it.java.destinationDirectory = merged
+}
 '''
     (out / 'build.gradle').write_text(build, encoding='utf-8')
     (out / 'gradle.properties').write_text('org.gradle.jvmargs=-Xmx2G\norg.gradle.workers.max=2\norg.gradle.daemon=false\n', encoding='utf-8')
