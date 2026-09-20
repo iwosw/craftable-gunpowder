@@ -1,54 +1,80 @@
-<p align="center"><img src="art/icon.png" width="96" alt="Craftable Gunpowder"></p>
+<p align="center">
+  <img src="art/icon.png" width="96" alt="Craftable Gunpowder">
+</p>
 
-# Craftable Gunpowder
+<h1 align="center">Craftable Gunpowder</h1>
+<p align="center">Mine sulfur. Compost humus. Craft gunpowder.</p>
+<p align="center">
+  <a href="https://github.com/iwosw/craftable-gunpowder/actions/workflows/build.yml"><img src="https://github.com/iwosw/craftable-gunpowder/actions/workflows/build.yml/badge.svg" alt="Build and tests"></a>
+  <a href="https://github.com/iwosw/craftable-gunpowder/releases"><img src="https://img.shields.io/github/v/release/iwosw/craftable-gunpowder" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/author-iwoss-yellow" alt="Author: iwoss">
+</p>
+<p align="center"><b>English</b> · <a href="README.ru.md">Русский</a> · <a href="https://github.com/iwosw/craftable-gunpowder/releases">Download</a> · <a href="https://github.com/iwosw/craftable-gunpowder/issues">Report an issue</a></p>
 
-**Автор: iwoss.** Мод для Minecraft Java: добывай серу, перерабатывай растительные материалы в перегной и селитру, создавай порох на верстаке.
+![Sulfur, sulfur ore, deepslate sulfur ore, saltpeter and humus](art/texture-preview.png)
 
-**1 сера + 1 селитра + 1 древесный уголь = 8 пороха.** Обычный уголь не подходит.
+A small Minecraft Java mod by **iwoss**, adding a resource-based way to obtain gunpowder.
 
-![Сера, серная руда, глубинная серная руда, селитра и перегной](art/texture-preview.png)
+**1 sulfur + 1 saltpeter + 1 charcoal → 8 gunpowder.** Regular coal is not accepted.
 
-## Как играть
+## Features
 
-1. Найди серную руду в обычном мире на высоте **Y −48…80**. Она появляется только при генерации новых чанков: до 6 жил на чанк, до 8 блоков в жиле. Под землёй встречается и глубинная разновидность. Нужна каменная кирка или лучше. «Удача» увеличивает добычу серы, «Шёлковое касание» сохраняет руду.
-2. Сделай **перегной** из листвы, пшеницы, земли и семян пшеницы.
-3. Соедини перегной с песком и ведром воды, чтобы получить **селитру**. Пустое ведро возвращается.
-4. Положи серу, селитру и **древесный уголь** в один ряд верстака — получишь **8 пороха**.
+- Sulfur ore and deepslate sulfur ore in the Overworld.
+- Humus crafted from plant materials; saltpeter obtained from a vanilla composter.
+- **25% chance** to receive one saltpeter per humus used on a composter.
+- Crafting-table recipes, recipe-book unlocks, Fortune and Silk Touch support.
+- Original 16×16 textures, English and Russian translations.
+- Separate builds for Fabric, Forge and NeoForge.
 
-Все три рецепта требуют верстак 3×3. Рецепты автоматически открываются в книге рецептов при получении соответствующего материала.
+## Installation
 
-### Перегной ×4
+1. Install a supported loader for your **exact Minecraft version** from the table below.
+2. Download the matching JAR from [Releases](https://github.com/iwosw/craftable-gunpowder/releases) and put it in `mods`.
+3. **Fabric requires Fabric API.** Forge and NeoForge need no additional mods.
+
+Install on **both the client and the server**. Use only one Craftable Gunpowder JAR per installation. Example: `craftable-gunpowder-1.21.1-neoforge-1.0.0.jar` is for Minecraft 1.21.1 with NeoForge.
+
+## Getting started
+
+### 1. Mine sulfur
+
+Find sulfur ore in **new Overworld chunks**, between **Y −48 and 80**. Mine it with a **stone pickaxe or better**. Fortune increases sulfur drops; Silk Touch preserves the ore block.
+
+### 2. Craft humus
+
+Combine **6 leaves, 1 wheat, 1 dirt and 1 wheat seed** at a crafting table to obtain **4 humus**:
 
 | | | |
 |---|---|---|
-| Листва | Пшеница | Листва |
-| Листва | Земля | Листва |
-| Листва | Семена пшеницы | Листва |
+| Leaves | Wheat | Leaves |
+| Leaves | Dirt | Leaves |
+| Leaves | Wheat Seeds | Leaves |
 
-Подходит любая листва из тега `minecraft:leaves`.
+Any leaves in the `minecraft:leaves` tag work.
 
-### Селитра ×3
+### 3. Use a composter
+
+**Right-click a non-full vanilla composter while holding humus.** Each attempt consumes one humus and has a **25% chance** to drop **one saltpeter** above the composter. Unsuccessful attempts still consume humus.
+
+This special interaction processes humus directly without filling the vanilla composting bar. Empty a full composter before using humus. Dropping items with Q or feeding a hopper does not trigger the interaction. Saltpeter has **no crafting recipe**.
+
+### 4. Craft gunpowder
+
+Place the ingredients in **one horizontal row** of a crafting table:
 
 | | | |
 |---|---|---|
-| — | Перегной | — |
-| Перегной | Ведро воды | Перегной |
-| — | Песок | — |
+| Sulfur | Saltpeter | **Charcoal** |
 
-### Порох ×8
+**Output: 8 vanilla gunpowder.** Any row and the mirrored arrangement work. The inventory's 2×2 grid is too small. Vanilla crafters also support the recipe in versions that have them.
 
-| | | |
-|---|---|---|
-| Сера | Селитра | Древесный уголь |
+## Supported versions
 
-Ряд можно расположить в любой строке верстака; зеркальный порядок также работает.
-
-## Версии
-
-Для каждой пары Minecraft/загрузчик выпускается **отдельный JAR**. Всего 24 сборки на 10 версий.
+**10 Minecraft releases · 24 separate builds.** Only the exact versions listed here are supported.
 
 | Minecraft | Fabric | Forge | NeoForge | Java |
-|---|:---:|:---:|:---:|---|
+|---|:---:|:---:|:---:|:---:|
 | 1.20.1 | ✓ | ✓ | ✓¹ | 17 |
 | 1.20.4 | ✓ | ✓ | ✓ | 17 |
 | 1.20.6 | ✓ | ✓ | ✓ | 21 |
@@ -60,58 +86,20 @@
 | 26.1 | ✓ | — | ✓² | 25 |
 | 26.2 | ✓ | — | ✓ | 25 |
 
-¹ NeoForge 1.20.1 использует раннюю ветку `net.neoforged:forge` и API Forge.
+¹ NeoForge 1.20.1 uses its original Forge-compatible branch.
 
-² Для точного выпуска Minecraft 26.1 доступен NeoForge `26.1.0.19-beta`. Это отдельная сборка, не сборка для 26.1.2.
+² Minecraft 26.1 uses **NeoForge 26.1.0.19-beta**. This is not a 26.1.2 build.
 
-Заявленные версии ограничены перечисленными выпусками. Полные номера зависимостей закреплены в [versions.json](versions.json). Сера мода имеет собственный идентификатор `craftablegunpowder:sulfur`, в том числе в 26.2.
+Exact loader and Fabric API versions are pinned in [versions.json](versions.json). The mod's sulfur uses its own namespace, including on Minecraft 26.2.
 
-## Установка
+## Development
 
-1. Установи нужный загрузчик для **точной** версии Minecraft из таблицы.
-2. Скачай соответствующий JAR из [Releases](https://github.com/iwosw/craftable-gunpowder/releases) и положи его в папку `mods`.
-3. Для **Fabric** дополнительно установи Fabric API под свою версию Minecraft. Для Forge/NeoForge дополнительных модов не требуется.
-4. На сервере мод должен стоять **и на сервере, и у игроков**. Установи только один JAR Craftable Gunpowder для своей пары версия/загрузчик.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and automated checks. GitHub Actions builds each target and boots an isolated test server. Client visuals and compatibility with other mods are not covered by those server checks.
 
-Интерфейс переведён на русский и английский. Новые материалы находятся во вкладке ингредиентов, руда — среди природных блоков.
+## Credits & license
 
-## Для разработчиков
+Created by **iwoss**. The icon was supplied by the author; all five textures were generated for this project with ImageGen. [Artwork sources and prompts](art/README.md).
 
-Нужны Python 3.10+, Java 17/21/25 по целевой версии; для современного инструментария сборки используется Java 21 или 25. Gradle скачивается через wrapper. Pillow нужен только для повторного экспорта исходных изображений.
+Released under the [MIT License](LICENSE). Modpack inclusion is welcome under the license terms.
 
-```sh
-python tools/prepare.py --minecraft 1.21.1 --loader neoforge
-cd .build/1.21.1-neoforge
-./gradlew build
-```
-
-Windows: `gradlew.bat build`. Для клиента: `runClient`; для тестового сервера: `runServer`.
-
-```sh
-python -m unittest discover -s tests -v
-python tools/build_matrix.py --target 1.21.1-neoforge
-python tools/build_matrix.py --jobs 2
-python tools/audit_jars.py
-```
-
-Готовые файлы: `dist/`. Логи и контрольные суммы: `.local/`. Можно задать `JAVA_HOME_17`, `JAVA_HOME_21`, `JAVA_HOME_25`, либо использовать переменные `JAVA_HOME_<version>_X64` от setup-java. Для Fabric инструмент сборки запускается на Java 25, а байткод мода соответствует версии из таблицы.
-
-Общие Java-шаблоны: `src/templates/`. Рецепты и ресурсы: `tools/resources.py`. Адаптация API и сборок: `tools/prepare.py`. Изменяй эти файлы, затем повторяй подготовку; `.build/` создаётся автоматически и не хранится в Git.
-
-Серверная проверка создаёт отдельный тестовый мир и привязывает сервер к `127.0.0.1`. Она проверяет регистрацию материалов, добычу серы, «Шёлковое касание», размещение рудной жилы и перезагрузку данных. Начиная с 1.21.1 ванильный автокрафтер дополнительно проверяет все три рецепта, возврат ведра, отказ обычного угля и отказ раскладки 2×2. После проверки сервер автоматически останавливается.
-
-```sh
-python tools/smoke_server.py --target 1.21.1-neoforge --accept-eula
-```
-
-Флаг `--accept-eula` означает принятие [Minecraft EULA](https://aka.ms/MinecraftEULA) для тестового сервера. Результаты сохраняются в `.local/smoke-result-*.json`; GitHub Actions прикладывает их к каждой сборке. Эти проверки не заменяют ручную проверку клиентского интерфейса и совместимости с другими модами.
-
-## English
-
-Mine sulfur ore in new Overworld chunks (Y −48 to 80), craft humus from leaves, wheat, dirt and wheat seeds, then craft saltpeter using humus, sand and a water bucket. The empty bucket is returned. A horizontal row of **sulfur + saltpeter + charcoal** produces **8 gunpowder**. Coal is deliberately not accepted. All recipes require a crafting table. Install the matching version/loader JAR on both client and server; Fabric also requires Fabric API.
-
-## Лицензия и графика
-
-[MIT](LICENSE). Все пять текстур созданы для проекта с помощью встроенного ImageGen и экспортированы в PNG 16×16. Иконку предоставил автор. Исходники и описание генерации: [art](art/README.md).
-
-Не является официальным продуктом Minecraft. Не одобрено Mojang или Microsoft и не связано с ними.
+Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.

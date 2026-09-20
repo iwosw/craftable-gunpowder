@@ -4,7 +4,7 @@
 
 - Серная и глубинная серная руда в обычном мире, Y −48…80.
 - Сера, селитра и перегной с новыми текстурами 16×16.
-- Перегной из листвы, пшеницы, земли и семян; селитра из перегноя, песка и ведра воды. Ведро возвращается.
+- Перегной из листвы, пшеницы, земли и семян. Используй его на неполной компостнице: каждая попытка расходует 1 перегной и с шансом 25% даёт 1 селитру.
 - **Сера + селитра + древесный уголь → 8 пороха.** Три клетки в ряд, только на верстаке. Обычный уголь не подходит.
 - «Удача», «Шёлковое касание», книга рецептов, русский и английский языки.
 - 24 отдельных JAR-файла для 10 версий Minecraft.
@@ -20,4 +20,4 @@
 
 `SHA256SUMS.txt` содержит контрольные суммы всех JAR. `manifest.json` содержит список файлов, размеры и SHA-256.
 
-**English:** Mine sulfur, craft humus and saltpeter, then combine sulfur + saltpeter + charcoal in a three-slot row to obtain 8 gunpowder. Coal is not accepted. Choose the JAR for your exact Minecraft version and loader; install on both client and server. Fabric requires Fabric API. Ore generates in new chunks only.
+**English:** Mine sulfur, craft humus, and right-click a non-full composter with humus for a 25% chance to obtain one saltpeter. Each attempt consumes one humus. Combine sulfur + saltpeter + charcoal in a three-slot row to obtain 8 gunpowder. Coal is not accepted. Choose the JAR for your exact Minecraft version and loader; install on both client and server. Fabric requires Fabric API. Ore generates in new chunks only.
