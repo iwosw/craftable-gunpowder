@@ -113,6 +113,10 @@ def generate(out, mc, loader):
     pack = {'pack_format': resource_formats[mc], 'description': 'Craftable Gunpowder by iwoss'}
     if version >= (1, 21, 11):
         pack.update(min_format=[resource_formats[mc], 0], max_format=[formats[mc], 1])
+        if resource_formats[mc] < 82:
+            # The combined mod pack spans the transition to fractional data
+            # versions; Minecraft also requires a legacy range below 82.
+            pack['supported_formats'] = [resource_formats[mc], 81]
     elif version >= (1, 20, 2):
         pack['supported_formats'] = {'min_inclusive': resource_formats[mc], 'max_inclusive': formats[mc]}
     write_json(out / 'pack.mcmeta', {'pack': pack})
