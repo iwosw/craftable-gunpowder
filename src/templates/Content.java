@@ -12,6 +12,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 /** Shared block/item properties; only version-sensitive API names are substituted. */
 public final class Content {
     public static final String MOD_ID = "craftablegunpowder";
+    static Item saltpeter;
+    static Item humus;
 
     private Content() {}
 
@@ -22,7 +24,10 @@ public final class Content {
     public static Item item(String name) {
         Item.Properties properties = new Item.Properties();
         @ITEM_ID@
-        return new Item(properties);
+        Item item = name.equals("humus") ? new HumusItem(properties) : new Item(properties);
+        if (name.equals("saltpeter")) saltpeter = item;
+        if (name.equals("humus")) humus = item;
+        return item;
     }
 
     public static Block ore(String name, boolean deepslate) {

@@ -44,8 +44,10 @@ def generate(out, mc, loader):
            'C': 'minecraft:charcoal'}, 'minecraft:gunpowder', 8, f'{MOD}:sulfur')
     recipe('humus', ['LWL', 'LDL', 'LSL'], {'L': '#minecraft:leaves', 'W': 'minecraft:wheat',
            'D': 'minecraft:dirt', 'S': 'minecraft:wheat_seeds'}, f'{MOD}:humus', 4, 'minecraft:dirt')
-    recipe('saltpeter', [' H ', 'HBH', ' S '], {'H': f'{MOD}:humus', 'B': 'minecraft:water_bucket',
-           'S': 'minecraft:sand'}, f'{MOD}:saltpeter', 3, f'{MOD}:humus')
+    # Saltpeter is obtained exclusively by using humus on a composter.
+    # Remove obsolete generated recipes when updating an existing target.
+    (data / recipe_dir / 'saltpeter.json').unlink(missing_ok=True)
+    (data / advancement_dir / 'recipes/saltpeter.json').unlink(missing_ok=True)
 
     silk = {'enchantments': 'minecraft:silk_touch', 'levels': {'min': 1}}
     silk_predicate = ({'predicates': {'minecraft:enchantments': [silk]}} if components else
