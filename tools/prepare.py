@@ -33,19 +33,44 @@ def prepare(row, integration=False):
 
     identifier = 'Identifier' if v >= (1, 21, 11) else 'ResourceLocation'
     values = dict(IDENTIFIER=identifier,
+                  CONFIG_DIR=('net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir()' if loader == 'fabric' else
+                              ('net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get()' if neo else 'net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get()')),
+                  TARGET=f'{mc}-{loader}',
                   INTEGRATION_HOOK='',
                   ID_FACTORY=f'{identifier}.fromNamespaceAndPath(MOD_ID, path)' if v >= (1, 21) else 'new ResourceLocation(MOD_ID, path)',
                   ITEM_ID='properties.setId(ResourceKey.create(Registries.ITEM, id(name)));' if v >= (1, 21, 2) else '',
                   BLOCK_ID='properties.setId(ResourceKey.create(Registries.BLOCK, id(name)));' if v >= (1, 21, 2) else '',
                   BLOCK_DESCRIPTION='properties.useBlockDescriptionPrefix();' if v >= (1, 21, 2) else '')
+    if v >= (1, 20, 5):
+        values['CREATE_PACK'] = '''Pack.readMetaAndCreate(
+                new net.minecraft.server.packs.PackLocationInfo("craftablegunpowder_config",
+                        Component.literal("Craftable Gunpowder configuration"), PackSource.BUILT_IN, java.util.Optional.empty()),
+                new PathPackResources.PathResourcesSupplier(root), PackType.SERVER_DATA,
+                new net.minecraft.server.packs.PackSelectionConfig(true, Pack.Position.TOP, false))'''
+    else:
+        supplier = ('new PathPackResources.PathResourcesSupplier(root, true)' if v >= (1, 20, 2)
+                    else 'id -> new PathPackResources(id, root, true)')
+        values['CREATE_PACK'] = f'''Pack.readMetaAndCreate("craftablegunpowder_config",
+                Component.literal("Craftable Gunpowder configuration"), true, {supplier},
+                PackType.SERVER_DATA, Pack.Position.TOP, PackSource.BUILT_IN)'''
+    for template in ('ModConfig.java', 'ConfigPack.java'):
+        (java / template).write_text(substitute(template, values), encoding='utf-8')
     (java / 'Content.java').write_text(substitute('Content.java', values), encoding='utf-8')
     (java / 'HumusItem.java').write_text(substitute('HumusItem.java', values), encoding='utf-8')
     integration_file = java / 'IntegrationChecks.java'
     if integration:
         shutil.copy2(ROOT / 'tests/java/IntegrationChecks.java', integration_file)
+        checks = (ROOT / 'tests/java/ConfigIntegrationChecks.java').read_text(encoding='utf-8')
+        if v < (1, 20, 2):
+            checks = checks.replace('server.getAdvancements().get(', 'server.getAdvancements().getAdvancement(')
+        (java / 'ConfigIntegrationChecks.java').write_text(checks, encoding='utf-8')
     else:
         integration_file.unlink(missing_ok=True)
+        (java / 'ConfigIntegrationChecks.java').unlink(missing_ok=True)
     if loader == 'fabric':
+        (java / 'ConfigPackMixin.java').unlink(missing_ok=True)
+        (java / 'mixin').mkdir(exist_ok=True)
+        (java / 'mixin/ConfigPackMixin.java').write_text(substitute('ConfigPackMixin.java', values), encoding='utf-8')
         values.update(TAB_PACKAGE='creativetab.v1' if modern else 'itemgroup.v1',
                       TAB_EVENTS='CreativeModeTabEvents' if modern else 'ItemGroupEvents',
                       TAB_METHOD='modifyOutputEvent' if modern else 'modifyEntriesEvent')
@@ -65,6 +90,17 @@ def prepare(row, integration=False):
             values['INTEGRATION_HOOK'] = f'{bus_owner}.EVENT_BUS.addListener(({values["FORGE_PACKAGE"]}.event.RegisterCommandsEvent event) -> IntegrationChecks.register(event.getDispatcher()));'
     (java / f'{entry}.java').write_text(substitute(f'{entry}.java', values), encoding='utf-8')
     generate(resources, mc, loader)
+    # Configurable data is loaded as a required server pack on every loader.
+    # Keep pristine defaults in the JAR, outside the automatically loaded data/.
+    defaults = resources / 'config_defaults'
+    if defaults.exists():
+        assert defaults.resolve().is_relative_to((ROOT / '.build').resolve())
+        shutil.rmtree(defaults)
+    defaults.mkdir()
+    shutil.move(str(resources / 'data'), str(defaults / 'data'))
+    shutil.copy2(resources / 'pack.mcmeta', defaults / 'pack.mcmeta')
+    (defaults / 'index.txt').write_text('\n'.join(sorted(p.relative_to(defaults).as_posix()
+        for p in defaults.rglob('*') if p.is_file())) + '\n', encoding='utf-8')
 
     if loader == 'fabric':
         write_json(resources / 'fabric.mod.json', {
@@ -74,8 +110,12 @@ def prepare(row, integration=False):
                 'issues': 'https://github.com/iwosw/craftable-gunpowder/issues'},
             'license': 'MIT', 'icon': 'icon.png', 'environment': '*',
             'entrypoints': {'main': ['dev.iwoss.craftablegunpowder.FabricEntrypoint']},
+            'mixins': ['craftablegunpowder.mixins.json'],
             'depends': {'fabricloader': '>=' + row['loader_version'], 'minecraft': mc,
                         'java': '>=' + str(row['java']), 'fabric-api': '*'}})
+        write_json(resources / 'craftablegunpowder.mixins.json', {
+            'required': True, 'package': 'dev.iwoss.craftablegunpowder.mixin', 'compatibilityLevel': 'JAVA_17',
+            'mixins': ['ConfigPackMixin'], 'injectors': {'defaultRequire': 1}})
     else:
         dep_id = 'neoforge' if neo else 'forge'
         toml_name = 'neoforge.mods.toml' if neo and v >= (1, 20, 6) else 'mods.toml'

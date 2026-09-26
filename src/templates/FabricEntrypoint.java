@@ -16,6 +16,7 @@ import net.minecraft.world.level.levelgen.GenerationStep;
 public final class FabricEntrypoint implements ModInitializer {
     @Override
     public void onInitialize() {
+        ModConfig.get();
         Item sulfur = item("sulfur");
         Item saltpeter = item("saltpeter");
         Item humus = item("humus");

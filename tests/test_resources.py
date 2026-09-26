@@ -69,5 +69,35 @@ class ResourceContracts(unittest.TestCase):
             self.assertEqual(struct.unpack('>II', data[16:24]), (16, 16))
             self.assertEqual(data[25], 6, 'Textures must preserve RGBA data')
 
+    def test_item_edges_are_opaque_and_padded(self):
+        from PIL import Image
+        for name in ('saltpeter', 'sulfur'):
+            with Image.open(ROOT / f'shared/assets/craftablegunpowder/textures/item/{name}.png') as im:
+                alpha = im.getchannel('A')
+                self.assertEqual(set(alpha.tobytes()), {0, 255})
+                x0, y0, x1, y1 = alpha.getbbox()
+                self.assertTrue(0 < x0 < x1 < 16 and 0 < y0 < y1 < 16)
+
+    def test_advancement_tree_all_formats(self):
+        for row in CONFIG['targets']:
+            with self.subTest(row=row), tempfile.TemporaryDirectory() as directory:
+                out = Path(directory)
+                generate(out, row['minecraft'], row['loader'])
+                folder = 'advancement' if ver(row['minecraft']) >= (1, 21) else 'advancements'
+                tree = {p.stem: json.loads(p.read_text(encoding='utf-8'))
+                        for p in (out / 'data/craftablegunpowder' / folder).glob('*.json')}
+                self.assertEqual(set(tree), {'root', 'saltpeter', 'sulfur', 'ingredients', 'gunpowder'})
+                self.assertNotIn('parent', tree['root'])
+                for name, node in tree.items():
+                    if 'parent' in node:
+                        self.assertIn(node['parent'].split(':')[1], tree)
+                    for lang in ('ru_ru', 'en_us'):
+                        translations = json.loads((out / f'assets/craftablegunpowder/lang/{lang}.json').read_text(encoding='utf-8'))
+                        for part in ('title', 'description'):
+                            self.assertIn(node['display'][part]['translate'], translations)
+                final = tree['gunpowder']['criteria']['complete']
+                self.assertEqual(final['trigger'], 'minecraft:recipe_crafted')
+                self.assertEqual(final['conditions']['recipe_id'], 'craftablegunpowder:gunpowder')
+
 if __name__ == '__main__':
     unittest.main()

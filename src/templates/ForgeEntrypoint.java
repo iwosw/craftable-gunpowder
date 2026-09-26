@@ -25,7 +25,12 @@ public final class ForgeEntrypoint {
     public static final Supplier<Item> DEEPSLATE_SULFUR_ORE_ITEM = ITEMS.register("deepslate_sulfur_ore", () -> Content.blockItem("deepslate_sulfur_ore", DEEPSLATE_SULFUR_ORE.get()));
 
     public ForgeEntrypoint(@BUS_ARGUMENT@) {
+        ModConfig.get();
         @BUS_LOOKUP@
+        bus.addListener((@FORGE_PACKAGE@.event.AddPackFindersEvent event) -> {
+            if (event.getPackType() == net.minecraft.server.packs.PackType.SERVER_DATA)
+                event.addRepositorySource(ConfigPack::add);
+        });
         BLOCKS.register(bus);
         ITEMS.register(bus);
         bus.addListener(this::creativeTabs);

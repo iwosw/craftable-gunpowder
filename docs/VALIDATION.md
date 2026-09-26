@@ -1,46 +1,16 @@
-# Release validation — 1.0.0
+# Release validation — 1.1.0
 
-Tested implementation: [`af68663`](https://github.com/iwosw/craftable-gunpowder/commit/af68663012c9181005bed88990b624fad1fede45).
+These results cover the local checks for version 1.1.0. The GitHub Actions link at the end refers to the previous 1.0.0 validation.
 
-[GitHub Actions run](https://github.com/iwosw/craftable-gunpowder/actions/runs/35497362262): **passed**, September 20, 2026.
+- **24/24** target builds completed successfully (local logs from September 22, 2026).
+- **24/24** target servers started and passed integration checks. The saved reports include 27 successful runs total: the 24-target matrix and three additional custom-configuration runs.
+- The server checks cover mod content, humus use and consumption, saltpeter rolls, ore drops, Silk Touch, feature placement and data reload.
+- **15/15** targets with the vanilla crafter passed recipe checks for the configured gunpowder and humus output counts, rejection of regular coal and rejection of the 2×2 layout.
+- Three custom configurations passed on Forge 1.20.1, NeoForge 1.21.1 and Fabric 26.2. They exercised guaranteed saltpeter, custom sulfur drops, disabled Fortune and Silk Touch, altered recipe outputs, ore generation and block properties, and advancement experience.
+- **5/5** resource-contract tests passed locally on September 26, 2026.
+- **24/24** distributable 1.1.0 JARs passed the artifact audit on September 26, 2026. The audit checked archive integrity, loader metadata, target versions, bytecode, remapping, textures, default config-pack resources, recipes and exclusion of development-only integration hooks.
+- A local NeoForge 1.21.1 client session started, loaded the built-in config data pack and created a world. This was a single client check, not a visual test across every target or a compatibility test with third-party mods.
 
-- **24/24** runtime JARs built successfully.
-- **24/24** isolated servers started and passed content checks.
-- **24/24** composter integration checks passed: humus interaction, consumption, fixed-seed 25% rolls, saltpeter item/count, creative handling and invalid-target rejection.
-- **24/24** ore-drop, Silk Touch, feature-placement and data-reload checks passed.
-- **15/15** targets with a vanilla crafter passed real recipe-manager checks: 8 gunpowder, 4 humus, coal rejection and rejection of a 2×2 ingredient layout.
-- Resource-contract tests passed for all 24 targets.
-- All 24 downloaded artifacts passed metadata, PNG, Java bytecode, Fabric remapping, recipe and development-code exclusion audits. No obsolete saltpeter crafting recipe is packaged.
+The server integration runs use each target's development build. The separate release JARs passed the artifact audit; the tests do not establish compatibility with every modpack.
 
-| Minecraft | Loader | Build | Server + composter | In-game crafting |
-|---|---|:---:|:---:|:---:|
-| 1.20.1 | Fabric | Pass | Pass | — |
-| 1.20.1 | Forge | Pass | Pass | — |
-| 1.20.1 | NeoForge | Pass | Pass | — |
-| 1.20.4 | Fabric | Pass | Pass | — |
-| 1.20.4 | Forge | Pass | Pass | — |
-| 1.20.4 | NeoForge | Pass | Pass | — |
-| 1.20.6 | Fabric | Pass | Pass | — |
-| 1.20.6 | Forge | Pass | Pass | — |
-| 1.20.6 | NeoForge | Pass | Pass | — |
-| 1.21.1 | Fabric | Pass | Pass | Pass |
-| 1.21.1 | Forge | Pass | Pass | Pass |
-| 1.21.1 | NeoForge | Pass | Pass | Pass |
-| 1.21.4 | Fabric | Pass | Pass | Pass |
-| 1.21.4 | NeoForge | Pass | Pass | Pass |
-| 1.21.5 | Fabric | Pass | Pass | Pass |
-| 1.21.5 | NeoForge | Pass | Pass | Pass |
-| 1.21.8 | Fabric | Pass | Pass | Pass |
-| 1.21.8 | NeoForge | Pass | Pass | Pass |
-| 1.21.11 | Fabric | Pass | Pass | Pass |
-| 1.21.11 | NeoForge | Pass | Pass | Pass |
-| 26.1 | Fabric | Pass | Pass | Pass |
-| 26.1 | NeoForge | Pass | Pass | Pass |
-| 26.2 | Fabric | Pass | Pass | Pass |
-| 26.2 | NeoForge | Pass | Pass | Pass |
-
-The 1.20.x targets have recipe data/schema checks and successful game data loading; the automatic vanilla-crafter test runs only on 1.21.1 and newer. Servers run the development variant of each target. Distributed runtime JARs are built separately and audited; development-only test classes and command hooks are excluded.
-
-**Not covered:** manual mouse interaction, client rendering and compatibility with third-party mods. Server checks do not establish those properties.
-
-Per-target logs and JSON reports are attached to the linked Actions run as `build-log-*` artifacts. Release files include `SHA256SUMS.txt` and `manifest.json` for integrity verification.
+The previous [GitHub Actions validation](https://github.com/iwosw/craftable-gunpowder/actions/runs/35497362262) applies to **version 1.0.0**, not 1.1.0.

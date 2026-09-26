@@ -25,6 +25,7 @@ public final class IntegrationChecks {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("craftablegunpowder_test").executes(context -> {
             run(context.getSource().getServer());
+            ConfigIntegrationChecks.run(context.getSource().getServer());
             context.getSource().sendSuccess(() -> Component.literal("CRAFTABLE_GUNPOWDER_COMPOST_TEST_PASS"), false);
             return 1;
         }));
@@ -34,6 +35,7 @@ public final class IntegrationChecks {
         ServerLevel level = server.overworld();
         BlockPos pos = new BlockPos(8, 100, 8);
         HumusItem humus = (HumusItem) Content.humus;
+        ModConfig config = ModConfig.get();
         ItemStack input = new ItemStack(humus, 2);
         level.setBlockAndUpdate(pos, Blocks.STONE.defaultBlockState());
         check(humus.useOn(new Context(level, pos, input)) == InteractionResult.PASS, "Non-composter interaction must pass");
@@ -55,14 +57,14 @@ public final class IntegrationChecks {
         for (int i = 0; i < 256; i++) {
             ItemStack attempt = new ItemStack(humus);
             if (HumusItem.compost(level, pos, attempt, false, random)) successes++;
-            if (expected.nextFloat() < 0.25F) expectedSuccesses++;
+            if (expected.nextFloat() < config.saltpeterChance) expectedSuccesses++;
             check(attempt.isEmpty(), "Every attempt must consume one humus, including failures");
         }
-        check(successes == expectedSuccesses && successes > 0 && successes < 256, "Saltpeter chance must be exactly 25 percent");
+        check(successes == expectedSuccesses, "Saltpeter chance must match the config");
         var drops = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos).inflate(2));
         check(drops.size() == successes, "One drop entity must spawn for each successful attempt");
         for (ItemEntity drop : drops) {
-            check(drop.getItem().is(Content.saltpeter) && drop.getItem().getCount() == 1, "Each success must give one saltpeter");
+            check(drop.getItem().is(Content.saltpeter) && drop.getItem().getCount() == config.saltpeterMin, "Each success must give the configured saltpeter count");
         }
         ItemStack creative = new ItemStack(humus, 2);
         HumusItem.compost(level, pos, creative, true, random);

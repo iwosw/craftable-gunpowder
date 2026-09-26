@@ -5,7 +5,7 @@
 - Python 3.10 or newer.
 - Java 21 for Forge and older NeoForge build tooling; Java 25 for Fabric tooling and Minecraft 26.x.
 - Java toolchains 17, 21 and 25 are resolved by Gradle as required by the target. Gradle itself is provided by the wrapper.
-- Pillow is only needed to re-export the original generated artwork.
+- Pillow is needed to re-export artwork and verify texture alpha/borders (`python -m pip install Pillow`).
 
 ## One target
 
@@ -37,11 +37,14 @@ Runtime artifacts go to `dist/`; logs and build records go to `.local/`. Artifac
 ```sh
 python tools/smoke_server.py --target 1.21.1-neoforge --accept-eula
 python tools/smoke_server.py --all --jobs 2 --accept-eula
+python tools/smoke_server.py --target 1.21.1-neoforge --custom-config --accept-eula
 ```
 
 `--accept-eula` acknowledges the [Minecraft EULA](https://aka.ms/MinecraftEULA) for the local test server. Each target uses an isolated `run/smoke-world` directory and binds only to `127.0.0.1`. The script stops its server afterward.
 
 Checks cover item registration, the actual humus item interaction, consumption on successful and unsuccessful attempts, deterministic 25% saltpeter rolls, drop identity/count, creative behavior, full-composter rejection, ore loot, Silk Touch, placed ore features and data reloads. On Minecraft 1.21.1 and newer, the vanilla crafter also tests the humus/gunpowder recipes, coal rejection and rejection of a 2×2 ingredient layout.
+
+Checks also validate advancement registration, configuration creation/defaults, malformed and out-of-range settings, 0%/100% rolls, configurable costs and failure consumption. `--custom-config` boots with modified settings on disk and verifies actual loot, recipe quantities and disabled Fortune/Silk Touch. The runner restores the previous development config after stopping. Never run build and smoke commands concurrently against the same generated target.
 
 `tests/java/IntegrationChecks.java` and its command registration are included only in the generated development project used by the smoke runner. They are **never included in release JARs**. Always prepare/build normally before producing distribution artifacts.
 

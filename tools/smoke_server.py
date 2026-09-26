@@ -46,11 +46,20 @@ class Rcon:
             raise RuntimeError('RCON authentication failed')
         return response[8:-2].decode('utf-8', errors='replace')
 
-def smoke(row, timeout):
+def smoke(row, timeout, custom_config=False):
     target = f"{row['minecraft']}-{row['loader']}"
     project = prepare(row, integration=True)
     run = project / 'run'
     run.mkdir(exist_ok=True)
+    config_file = run / 'config/craftablegunpowder.json'
+    config_file.parent.mkdir(exist_ok=True)
+    original_config = config_file.read_bytes() if config_file.exists() else None
+    profile = ({'saltpeterChance': 1.0, 'saltpeterMin': 3, 'saltpeterMax': 3,
+                'sulfurMin': 3, 'sulfurMax': 3, 'fortuneEnabled': False, 'silkTouchEnabled': False,
+                'gunpowderCount': 16, 'humusCount': 7, 'veinSize': 12, 'veinsPerChunk': 2,
+                'minY': -32, 'maxY': 48, 'oreHardness': 6.0, 'oreBlastResistance': 9.0,
+                'finalAdvancementExperience': 125} if custom_config else {})
+    config_file.write_text(json.dumps(profile), encoding='utf-8')
     (run / 'eula.txt').write_text('eula=true\n')
     port, rcon_port = free_port(), free_port()
     password = secrets.token_hex(16)
@@ -72,7 +81,8 @@ pause-when-empty-seconds=0
     env = os.environ.copy()
     major = 25 if row['loader'] == 'fabric' or row['java'] == 25 else 21
     env['JAVA_HOME'] = env.get(f'JAVA_HOME_{major}', env.get(f'JAVA_HOME_{major}_X64', env.get('JAVA_HOME', '')))
-    log = ROOT / '.local' / f'smoke-{target}.log'
+    suffix = '-custom' if custom_config else ''
+    log = ROOT / '.local' / f'smoke-{target}{suffix}.log'
     log.parent.mkdir(exist_ok=True)
     command = [str(project / ('gradlew.bat' if os.name == 'nt' else 'gradlew')), 'runServer', '--console', 'plain']
     record = {'target': target, 'passed': False, 'checks': {}}
@@ -98,7 +108,8 @@ pause-when-empty-seconds=0
             compost_result = rcon.call('craftablegunpowder_test')
             if 'CRAFTABLE_GUNPOWDER_COMPOST_TEST_PASS' not in compost_result:
                 raise RuntimeError('Composter integration checks did not pass: ' + compost_result)
-            record['checks']['composter_25_percent'] = True
+            record['checks']['composter_and_config'] = True
+            record['config_profile'] = profile
             for index, name in enumerate(('sulfur', 'saltpeter', 'humus', 'sulfur_ore', 'deepslate_sulfur_ore')):
                 response = rcon.call(f'item replace block 0 100 0 container.{index} with craftablegunpowder:{name}')
                 record['checks'][name] = response
@@ -107,12 +118,18 @@ pause-when-empty-seconds=0
             rcon.call('setblock 2 100 0 craftablegunpowder:sulfur_ore')
             response = rcon.call('loot replace block 0 100 0 container.9 mine 2 100 0 minecraft:stone_pickaxe')
             record['checks']['ore_drop'] = response
-            if '1 ' not in response:
+            if ('3 ' if custom_config else '1 ') not in response:
                 raise RuntimeError('Ore drop failed: ' + response)
             response = rcon.call('data get block 0 100 0 Items[{Slot:9b}].id')
             record['checks']['inventory'] = response
             if '"craftablegunpowder:sulfur"' not in response:
                 raise RuntimeError('Missing sulfur in loot result')
+            inventory = rcon.call('data get block 0 100 0 Items[{Slot:9b}]')
+            expected_count = 3 if custom_config else 1
+            count_field = 'Count' if ver(row['minecraft']) < (1, 20, 5) else 'count'
+            if f'{count_field}: {expected_count}' not in inventory:
+                raise RuntimeError('Configured sulfur count failed: ' + inventory)
+            record['checks']['configured_sulfur_count'] = inventory
             if ver(row['minecraft']) < (1, 20, 5):
                 enchanted_tool = 'minecraft:diamond_pickaxe{Enchantments:[{id:"minecraft:silk_touch",lvl:1s}]}'
             elif ver(row['minecraft']) < (1, 21, 5):
@@ -124,8 +141,16 @@ pause-when-empty-seconds=0
                 response = rcon.call('loot replace block 0 100 0 container.10 mine 2 100 0 ' + enchanted_tool)
                 response = rcon.call('data get block 0 100 0 Items[{Slot:10b}].id')
                 record['checks']['silk_' + name] = response
-                if f'"craftablegunpowder:{name}"' not in response:
+                expected_item = 'sulfur' if custom_config else name
+                if f'"craftablegunpowder:{expected_item}"' not in response:
                     raise RuntimeError('Silk Touch failed: ' + response)
+            if custom_config:
+                fortune_tool = enchanted_tool.replace('silk_touch', 'fortune').replace('lvl:1s', 'lvl:5s').replace(':1}', ':5}').replace(':1}}', ':5}}')
+                rcon.call('loot replace block 0 100 0 container.11 mine 2 100 0 ' + fortune_tool)
+                inventory = rcon.call('data get block 0 100 0 Items[{Slot:11b}]')
+                if f'{count_field}: 3' not in inventory:
+                    raise RuntimeError('Disabled Fortune failed: ' + inventory)
+                record['checks']['fortune_disabled'] = inventory
             if ver(row['minecraft']) >= (1, 21):
                 # The vanilla crafter uses the actual crafting recipe manager.
                 # Its nine slots let us exercise success and rejection without
@@ -148,12 +173,12 @@ pause-when-empty-seconds=0
                         raise RuntimeError(f'Invalid recipe accepted: {name}')
                     return inventory
                 ingredients = {0: 'craftablegunpowder:sulfur', 1: 'craftablegunpowder:saltpeter', 2: 'minecraft:charcoal'}
-                craft('craft_8_gunpowder', ingredients, 'minecraft:gunpowder', 8)
+                craft('craft_gunpowder', ingredients, 'minecraft:gunpowder', 16 if custom_config else 8)
                 craft('reject_coal', {**ingredients, 2: 'minecraft:coal'})
                 craft('reject_2x2_layout', {0: ingredients[0], 1: ingredients[1], 3: ingredients[2]})
                 craft('craft_humus', {0: 'minecraft:oak_leaves', 1: 'minecraft:wheat', 2: 'minecraft:oak_leaves',
                       3: 'minecraft:oak_leaves', 4: 'minecraft:dirt', 5: 'minecraft:oak_leaves',
-                      6: 'minecraft:oak_leaves', 7: 'minecraft:wheat_seeds', 8: 'minecraft:oak_leaves'}, 'craftablegunpowder:humus', 4)
+                      6: 'minecraft:oak_leaves', 7: 'minecraft:wheat_seeds', 8: 'minecraft:oak_leaves'}, 'craftablegunpowder:humus', 7 if custom_config else 4)
             rcon.call('fill 5 40 5 20 55 20 minecraft:stone')
             response = rcon.call('place feature craftablegunpowder:sulfur_ore 12 46 12')
             record['checks']['feature'] = response
@@ -167,6 +192,8 @@ pause-when-empty-seconds=0
             if errors:
                 raise RuntimeError('\n'.join(errors))
             record['checks']['reload'] = True
+            if 'CRAFTABLE_GUNPOWDER_CONFIG_TEST_PASS' not in content:
+                raise RuntimeError('Configuration/advancement integration checks did not complete')
             record['passed'] = True
         except Exception as exc:
             record['error'] = str(exc)
@@ -184,7 +211,11 @@ pause-when-empty-seconds=0
                     subprocess.run(['taskkill', '/PID', str(process.pid), '/T', '/F'], capture_output=True)
                 else:
                     process.terminate()
-    (ROOT / '.local' / f'smoke-result-{target}.json').write_text(json.dumps(record, indent=2) + '\n')
+            if original_config is None:
+                config_file.unlink(missing_ok=True)
+            else:
+                config_file.write_bytes(original_config)
+    (ROOT / '.local' / f'smoke-result-{target}{suffix}.json').write_text(json.dumps(record, indent=2) + '\n')
     print(json.dumps(record, indent=2), flush=True)
     return record['passed']
 
@@ -195,6 +226,7 @@ if __name__ == '__main__':
     parser.add_argument('--jobs', type=int, default=2)
     parser.add_argument('--timeout', type=int, default=900)
     parser.add_argument('--accept-eula', action='store_true')
+    parser.add_argument('--custom-config', action='store_true', help='Verify modified on-disk settings on a real server')
     args = parser.parse_args()
     if not args.accept_eula:
         parser.error('--accept-eula is required to start the local test server')
@@ -202,5 +234,5 @@ if __name__ == '__main__':
     if not rows:
         parser.error('Select --target or --all')
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        results = list(pool.map(lambda row: smoke(row, args.timeout), rows))
+        results = list(pool.map(lambda row: smoke(row, args.timeout, args.custom_config), rows))
     raise SystemExit(0 if all(results) else 1)

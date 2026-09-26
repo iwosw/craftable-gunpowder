@@ -32,7 +32,8 @@ public final class Content {
 
     public static Block ore(String name, boolean deepslate) {
         BlockBehaviour.Properties properties = BlockBehaviour.Properties.of()
-                .strength(deepslate ? 4.5F : 3.0F, 3.0F)
+                .strength(deepslate ? ModConfig.get().deepslateOreHardness : ModConfig.get().oreHardness,
+                        ModConfig.get().oreBlastResistance)
                 .sound(deepslate ? SoundType.DEEPSLATE : SoundType.STONE)
                 .requiresCorrectToolForDrops();
         @BLOCK_ID@

@@ -20,6 +20,8 @@ A small Minecraft Java mod by **iwoss**, adding a resource-based way to obtain g
 
 ## Features
 
+Version **1.1.0** adds a shared `config/craftablegunpowder.json` for drops, composting, recipe output, ore generation, block properties and feature toggles, plus five localized advancements. Restart after editing settings. [Configuration reference](docs/CONFIG.md). Gameplay quantities below are the defaults.
+
 - Sulfur ore and deepslate sulfur ore in the Overworld.
 - Humus crafted from plant materials; saltpeter obtained from a vanilla composter.
 - **25% chance** to receive one saltpeter per humus used on a composter.
@@ -33,7 +35,7 @@ A small Minecraft Java mod by **iwoss**, adding a resource-based way to obtain g
 2. Download the matching JAR from [Releases](https://github.com/iwosw/craftable-gunpowder/releases) and put it in `mods`.
 3. **Fabric requires Fabric API.** Forge and NeoForge need no additional mods.
 
-Install on **both the client and the server**. Use only one Craftable Gunpowder JAR per installation. Example: `craftable-gunpowder-1.21.1-neoforge-1.0.0.jar` is for Minecraft 1.21.1 with NeoForge.
+Install on **both the client and the server**. Use only one Craftable Gunpowder JAR per installation. Example: `craftable-gunpowder-1.21.1-neoforge-1.1.0.jar` is for Minecraft 1.21.1 with NeoForge.
 
 ## Getting started
 
@@ -96,7 +98,7 @@ Exact loader and Fabric API versions are pinned in [versions.json](versions.json
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for build instructions and automated checks. GitHub Actions builds each target and boots an isolated test server. Client visuals and compatibility with other mods are not covered by those server checks.
 
-[1.0.0 verification results: 24/24 builds and servers passed.](docs/VALIDATION.md)
+[1.1.0 local verification results: all 24 builds and server checks passed.](docs/VALIDATION.md)
 
 ## Credits & license
 

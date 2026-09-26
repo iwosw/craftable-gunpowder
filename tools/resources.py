@@ -49,6 +49,33 @@ def generate(out, mc, loader):
     (data / recipe_dir / 'saltpeter.json').unlink(missing_ok=True)
     (data / advancement_dir / 'recipes/saltpeter.json').unlink(missing_ok=True)
 
+    milestones = [
+        ('root', None, 'humus', 'task'),
+        ('saltpeter', 'root', 'saltpeter', 'task'),
+        ('sulfur', 'root', 'sulfur', 'task'),
+        ('ingredients', 'saltpeter', 'sulfur', 'goal'),
+        ('gunpowder', 'ingredients', 'minecraft:gunpowder', 'challenge'),
+    ]
+    for name, parent, icon, frame in milestones:
+        icon_id = icon if ':' in icon else f'{MOD}:{icon}'
+        display = {'icon': {('id' if components else 'item'): icon_id},
+                   'title': {'translate': f'advancements.{MOD}.{name}.title'},
+                   'description': {'translate': f'advancements.{MOD}.{name}.description'},
+                   'frame': frame, 'show_toast': True, 'announce_to_chat': True, 'hidden': False}
+        if parent is None:
+            display['background'] = 'minecraft:textures/block/stone.png'
+        items = ([f'{MOD}:sulfur', f'{MOD}:saltpeter', 'minecraft:charcoal'] if name == 'ingredients' else [icon_id])
+        criterion = {'trigger': 'minecraft:inventory_changed',
+                     'conditions': {'items': [{'items': [item]} for item in items]}}
+        if name == 'gunpowder':
+            criterion = {'trigger': 'minecraft:recipe_crafted', 'conditions': {'recipe_id': f'{MOD}:gunpowder'}}
+        value = {'display': display, 'criteria': {'complete': criterion}, 'requirements': [['complete']]}
+        if parent:
+            value['parent'] = f'{MOD}:{parent}'
+        if name == 'gunpowder':
+            value['rewards'] = {'experience': 50}
+        write_json(data / advancement_dir / f'{name}.json', value)
+
     silk = {'enchantments': 'minecraft:silk_touch', 'levels': {'min': 1}}
     silk_predicate = ({'predicates': {'minecraft:enchantments': [silk]}} if components else
                       {'enchantments': [{'enchantment': 'minecraft:silk_touch', 'levels': {'min': 1}}]})
@@ -98,7 +125,22 @@ def generate(out, mc, loader):
     }.items():
         keys = ['item.' + MOD + '.' + i for i in ('sulfur', 'saltpeter', 'humus')]
         keys += ['block.' + MOD + '.' + b for b in ('sulfur_ore', 'deepslate_sulfur_ore')]
-        write_json(assets / 'lang' / f'{lang}.json', dict(zip(keys, names)))
+        translations = dict(zip(keys, names))
+        texts = ([('Craftable Gunpowder', 'Craft humus to start making your own gunpowder'),
+                  ('Composter chemistry', 'Obtain saltpeter by processing humus'),
+                  ('Yellow treasure', 'Obtain sulfur from sulfur ore'),
+                  ('All the ingredients', 'Carry sulfur, saltpeter and charcoal together'),
+                  ('Home-made fireworks', 'Craft gunpowder from sulfur, saltpeter and charcoal')]
+                 if lang == 'en_us' else
+                 [('Порох своими руками', 'Создайте перегной — первый шаг к собственному пороху'),
+                  ('Химия в компостнице', 'Получите селитру, переработав перегной'),
+                  ('Жёлтое сокровище', 'Добудьте серу из серной руды'),
+                  ('Всё по рецепту', 'Соберите в инвентаре серу, селитру и древесный уголь'),
+                  ('Сам себе крипер', 'Создайте порох из серы, селитры и древесного угля')])
+        for (name, *_), (title, description) in zip(milestones, texts):
+            translations[f'advancements.{MOD}.{name}.title'] = title
+            translations[f'advancements.{MOD}.{name}.description'] = description
+        write_json(assets / 'lang' / f'{lang}.json', translations)
     if (ROOT / 'shared/assets').exists():
         shutil.copytree(ROOT / 'shared/assets', out / 'assets', dirs_exist_ok=True)
     if (ROOT / 'art/icon.png').exists():

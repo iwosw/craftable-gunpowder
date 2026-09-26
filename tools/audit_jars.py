@@ -23,8 +23,9 @@ def audit(directory):
             for material in ('item/sulfur', 'item/saltpeter', 'item/humus', 'block/sulfur_ore', 'block/deepslate_sulfur_ore'):
                 texture = jar.read('assets/craftablegunpowder/textures/' + material + '.png')
                 assert struct.unpack('>II', texture[16:24]) == (16, 16), name
+                assert texture == (ROOT / 'shared/assets/craftablegunpowder/textures' / (material + '.png')).read_bytes(), 'Stale texture: ' + name
             entrypoint = 'FabricEntrypoint' if loader == 'fabric' else 'ForgeEntrypoint'
-            for cls in ('Content', 'HumusItem', entrypoint):
+            for cls in ('Content', 'HumusItem', 'ModConfig', 'ConfigPack', entrypoint):
                 bytecode = jar.read('dev/iwoss/craftablegunpowder/' + cls + '.class')
                 assert struct.unpack('>H', bytecode[6:8])[0] == row['java'] + 44, (name, cls)
             content = jar.read('dev/iwoss/craftablegunpowder/Content.class')
@@ -34,6 +35,8 @@ def audit(directory):
                 assert metadata['depends']['minecraft'] == mc, name
                 if not mc.startswith('26.'):
                     assert b'net/minecraft/class_' in content, 'Unremapped Fabric jar: ' + name
+                    mixin = jar.read('dev/iwoss/craftablegunpowder/mixin/ConfigPackMixin.class')
+                    assert b'method_' in mixin and b'loadPacks' not in mixin, 'Unremapped pack injection: ' + name
             else:
                 metadata_file = 'META-INF/neoforge.mods.toml' if loader == 'neoforge' and mc not in ('1.20.1', '1.20.4') else 'META-INF/mods.toml'
                 metadata = jar.read(metadata_file).decode()
@@ -43,6 +46,14 @@ def audit(directory):
                 recipe_path = 'data/craftablegunpowder/recipes/gunpowder.json'
             else:
                 recipe_path = 'data/craftablegunpowder/recipe/gunpowder.json'
+            recipe_path = 'config_defaults/' + recipe_path
+            assert not any(p.startswith('data/') for p in names), 'Unconfigured data leaked into ' + name
+            assert 'config_defaults/index.txt' in names, name
+            index = jar.read('config_defaults/index.txt').decode().splitlines()
+            assert all('config_defaults/' + item in names for item in index), 'Missing config default: ' + name
+            advancement_dir = 'advancements' if mc in ('1.20.1', '1.20.4', '1.20.6') else 'advancement'
+            for milestone in ('root', 'saltpeter', 'sulfur', 'ingredients', 'gunpowder'):
+                assert f'config_defaults/data/craftablegunpowder/{advancement_dir}/{milestone}.json' in names, name
             recipe = json.loads(jar.read(recipe_path))
             assert recipe_path.replace('gunpowder.json', 'saltpeter.json') not in names, 'Obsolete saltpeter recipe: ' + name
             assert recipe['result']['count'] == 8, name
